@@ -1,0 +1,14 @@
+{
+  "name": "com.raheeb-ahmad.ingame-debug-console",
+  "version": "1.0.0",
+  "displayName": "InGame Debug Console",
+  "description": "A polished runtime debug console overlay for Android and the Unity Editor. Captures logcat and Unity logs with type filtering, live search, auto-scroll, and a clean dark-theme UI.",
+  "unity": "2021.3",
+  "unityRelease": "0f1",
+  "dependencies": {},
+  "keywords": [ "debug", "console", "logcat", "android", "runtime", "logging", "overlay" ],
+  "author": {
+    "name": "Raheeb Ahmad",
+    "email": "raheebfantasy1062@gmail.com"
+  }
+}
