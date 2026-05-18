@@ -1,5 +1,5 @@
 // ================================================================
-//  InGame Debug Console  v1.0.0
+//  InGame Debug Console  v1.1.0
 //  Editor utility — adds the console prefab to the active scene
 //  ----------------------------------------------------------------
 //  Author  : Raheeb Ahmad
@@ -16,21 +16,18 @@ namespace RaheebAhmad.DebugConsole.Editor
 {
     public static class CreateInGameDebugConsole
     {
-        const string PrefabGuid    = "";   // filled by AssetDatabase search at runtime
         const string PrefabSearch  = "InGameDebugConsole t:Prefab";
         static readonly string[] SearchFolders = {
             "Assets/RaheebAhmad/InGameDebugConsole/Prefabs",
             "Packages/com.raheeb-ahmad.ingame-debug-console/Prefabs"
         };
 
-        [MenuItem("Tools/Create InGame Debug Console")]
+        [MenuItem("Tools/InGameDebugConsole/Add to Scene")]
         public static void Create()
         {
-            // Remove any existing instance
             var old = GameObject.Find("InGameDebugConsole");
             if (old != null) Undo.DestroyObjectImmediate(old);
 
-            // Locate prefab inside the package (works whether installed via UPM or as local Assets)
             var guids = AssetDatabase.FindAssets(PrefabSearch, SearchFolders);
             if (guids.Length == 0)
             {
@@ -39,16 +36,39 @@ namespace RaheebAhmad.DebugConsole.Editor
                 return;
             }
 
-            var path   = AssetDatabase.GUIDToAssetPath(guids[0]);
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-
+            var path     = AssetDatabase.GUIDToAssetPath(guids[0]);
+            var prefab   = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             Undo.RegisterCreatedObjectUndo(instance, "Create InGame Debug Console");
 
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
             Selection.activeGameObject = instance;
 
-            Debug.Log("[InGameDebugConsole] Added to scene — by Raheeb Ahmad v1.0.0");
+            Debug.Log("[InGameDebugConsole] Added to scene — by Raheeb Ahmad v1.1.0");
+        }
+
+        [MenuItem("Tools/InGameDebugConsole/Toggle Release Strip")]
+        public static void ToggleReleaseStrip()
+        {
+            var group   = EditorUserBuildSettings.selectedBuildTargetGroup;
+            string defs = PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
+
+            const string symbol = "RAHEEB_RELEASE";
+            var list = new System.Collections.Generic.List<string>(
+                defs.Split(new[] { ';' }, System.StringSplitOptions.RemoveEmptyEntries));
+
+            if (list.Contains(symbol))
+            {
+                list.Remove(symbol);
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
+                Debug.Log("[InGameDebugConsole] Debug console ENABLED (RAHEEB_RELEASE removed)");
+            }
+            else
+            {
+                list.Add(symbol);
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", list));
+                Debug.Log("[InGameDebugConsole] Debug console STRIPPED from release (RAHEEB_RELEASE added)");
+            }
         }
     }
 }
