@@ -18,12 +18,15 @@ namespace RaheebAhmad.DebugConsole
     public class InGameDebugConsole : MonoBehaviour
     {
         [Header("UI References")]
-        public GameObject panel;
-        public Text       logText;
-        public ScrollRect scrollRect;
-        public Text       toggleLabel;
-        public InputField searchInput;
-        public Text       statusText;
+        public  GameObject panel;
+        public  ScrollRect scrollRect;
+        public  Text       toggleLabel;
+        public  InputField searchInput;
+        public  Text       statusText;
+
+        [SerializeField] private RectTransform _contentRect;
+        [SerializeField] private GameObject    _rowPrefab;
+        [SerializeField] private int           _rowHeight = 22;
 
         [Header("Settings")]
         public int  maxEntries      = 150;
@@ -64,9 +67,19 @@ namespace RaheebAhmad.DebugConsole
         private float            _rebuildCooldown;
         private int              _errorsSinceClose;
 
-        private const int MaxDisplayLines = 200;
-
         private static InGameDebugConsole _instance;
+
+        private class RowView
+        {
+            public GameObject    go;
+            public RectTransform rt;
+            public Text          label;
+        }
+
+        private readonly List<RowView>  _pool         = new List<RowView>();
+        private          int            _visibleStart  = -1;
+        private          int            _visibleCount  = 0;
+        private          List<LogEntry> _filtered      = new List<LogEntry>();
 
         private enum Source { Unity, Logcat }
 
@@ -156,7 +169,10 @@ namespace RaheebAhmad.DebugConsole
                 });
 
             if (scrollRect != null)
+            {
                 scrollRect.onValueChanged.AddListener(OnScrollMoved);
+                scrollRect.onValueChanged.AddListener(_ => RefreshVisible());
+            }
         }
 
         private void Update()
@@ -340,16 +356,18 @@ namespace RaheebAhmad.DebugConsole
 
         private void Rebuild()
         {
-            if (logText == null) return;
+            if (_contentRect == null || scrollRect == null) return;
 
             bool searching = !string.IsNullOrEmpty(_searchTerm);
             int  totalLog = 0, totalWarn = 0, totalErr = 0;
-            var  matching = new List<string>();
+
+            _filtered.Clear();
 
             lock (_entries)
             {
-                foreach (var e in _entries)
+                for (int i = 0; i < _entries.Count; i++)
                 {
+                    var e = _entries[i];
                     if      (e.type == LogType.Log)     totalLog++;
                     else if (e.type == LogType.Warning) totalWarn++;
                     else                                totalErr++;
@@ -366,7 +384,7 @@ namespace RaheebAhmad.DebugConsole
                     if (searching && e.plainText.IndexOf(_searchTerm, System.StringComparison.OrdinalIgnoreCase) < 0)
                         continue;
 
-                    matching.Add(e.richLine);
+                    _filtered.Add(e);
                 }
             }
 
@@ -377,22 +395,65 @@ namespace RaheebAhmad.DebugConsole
             if (statusText != null)
                 statusText.text = string.Format(
                     "Showing {0} / {1}     LOG {2}  ·  WRN {3}  ·  ERR {4}",
-                    Mathf.Min(matching.Count, MaxDisplayLines), matching.Count,
-                    totalLog, totalWarn, totalErr);
+                    _filtered.Count, _filtered.Count, totalLog, totalWarn, totalErr);
 
-            var sb    = new StringBuilder();
-            int start = Mathf.Max(0, matching.Count - MaxDisplayLines);
-            if (start > 0)
-                sb.AppendLine(string.Format(
-                    "<color=#555E72>──── {0} earlier {1} hidden ────</color>",
-                    start, start == 1 ? "entry" : "entries"));
+            _contentRect.sizeDelta = new Vector2(0f, _filtered.Count * _rowHeight);
 
-            for (int i = start; i < matching.Count; i++)
-                sb.AppendLine(matching[i]);
+            _visibleStart = -1;
+            _visibleCount = 0;
+            RefreshVisible();
 
-            logText.text = sb.ToString();
             if (_autoScroll) _scrollPending = true;
         }
+
+        private void RefreshVisible()
+        {
+            if (_contentRect == null || scrollRect == null || _rowPrefab == null) return;
+
+            int filteredCount = _filtered.Count;
+            if (filteredCount == 0)
+            {
+                for (int i = 0; i < _pool.Count; i++) _pool[i].go.SetActive(false);
+                _visibleStart = 0;
+                _visibleCount = 0;
+                return;
+            }
+
+            int viewportHeight = (int)scrollRect.viewport.rect.height;
+            int rowsVisible    = Mathf.CeilToInt((float)viewportHeight / _rowHeight) + 1;
+
+            float scrollY    = _contentRect.anchoredPosition.y;
+            int firstVisible = Mathf.Max(0, (int)(scrollY / _rowHeight));
+            int lastVisible  = Mathf.Min(firstVisible + rowsVisible, filteredCount);
+
+            if (firstVisible == _visibleStart && (lastVisible - firstVisible) == _visibleCount)
+                return;
+
+            int needed = rowsVisible + 2;
+            while (_pool.Count < needed)
+            {
+                var rowGo  = Instantiate(_rowPrefab, _contentRect, false);
+                var rowRt  = rowGo.GetComponent<RectTransform>();
+                var rowTxt = rowGo.GetComponentInChildren<Text>(true);
+                _pool.Add(new RowView { go = rowGo, rt = rowRt, label = rowTxt });
+            }
+
+            for (int i = 0; i < _pool.Count; i++) _pool[i].go.SetActive(false);
+
+            for (int i = firstVisible; i < lastVisible; i++)
+            {
+                RowView  rv = _pool[i - firstVisible];
+                LogEntry e  = _filtered[i];
+                rv.go.SetActive(true);
+                rv.label.text          = FormatEntry(e);
+                rv.rt.anchoredPosition = new Vector2(0f, -i * _rowHeight);
+            }
+
+            _visibleStart = firstVisible;
+            _visibleCount = lastVisible - firstVisible;
+        }
+
+        private string FormatEntry(LogEntry e) => e.richLine;
 
         private void OnScrollMoved(Vector2 pos)
         {
@@ -407,7 +468,11 @@ namespace RaheebAhmad.DebugConsole
         public void ClearLogs()
         {
             lock (_entries) _entries.Clear();
-            if (logText        != null) logText.text        = string.Empty;
+            _filtered.Clear();
+            _visibleStart = -1;
+            _visibleCount = 0;
+            if (_contentRect != null) _contentRect.sizeDelta = new Vector2(0f, 0f);
+            for (int i = 0; i < _pool.Count; i++) _pool[i].go.SetActive(false);
             if (statusText     != null) statusText.text     = "No entries";
             if (_logCountText  != null) _logCountText.text  = "0";
             if (_warnCountText != null) _warnCountText.text = "0";
