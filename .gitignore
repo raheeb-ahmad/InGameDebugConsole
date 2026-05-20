@@ -1,0 +1,18 @@
+# OS junk
+.DS_Store
+[Tt]humbs.db
+[Dd]esktop.ini
+
+# IDEs
+.vscode/
+.idea/
+.rider/
+
+# Unity-generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]serSettings/

@@ -6,9 +6,12 @@
   "unity": "2021.3",
   "unityRelease": "0f1",
   "dependencies": {},
+  "license": "MIT",
+  "documentationUrl": "https://github.com/raheeb-ahmad/InGameDebugConsole#readme",
+  "changelogUrl": "https://github.com/raheeb-ahmad/InGameDebugConsole/releases",
   "keywords": [ "debug", "console", "logcat", "android", "runtime", "logging", "overlay" ],
   "author": {
     "name": "Raheeb Ahmad",
-    "email": "raheebfantasy1062@gmail.com"
+    "email": "raheebahmad1062@gmail.com"
   }
 }
