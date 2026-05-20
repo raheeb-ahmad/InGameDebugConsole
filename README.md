@@ -1,6 +1,6 @@
 # InGame Debug Console
 
-A lightweight runtime debug console overlay for Unity Android builds. See your logcat and Unity logs directly on-device — no USB cable, no Android Studio, no adb.
+A lightweight runtime debug console overlay for Unity Android builds. See your logcat and Unity logs directly on-device no USB cable, no Android Studio, no adb.
 
 ![Unity](https://img.shields.io/badge/Unity-2021.3%2B-black?logo=unity) ![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Editor-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Version](https://img.shields.io/badge/Version-1.0.0-orange)
 
