@@ -129,7 +129,7 @@ All entries are queued thread-safely using a `lock` on the entries list and a `v
 
 ## Performance note
 
-The current version concatenates all visible entries into a single `Text` component. For heavy logging (100+ entries per second) consider enabling the virtualized row pool — see the [Virtualized Scrolling](https://github.com/raheeb-ahmad/InGameDebugConsole/wiki) guide in the wiki.
+The current version concatenates all visible entries into a single `Text` component. For heavy logging (100+ entries per second) consider enabling the virtualized row pool, see the [Virtualized Scrolling](https://medium.com/@sreekanthsreekanth970/virtual-scrolling-2797d722c6e2) guide in the medium by Sreekanth.
 
 ---
 
@@ -156,5 +156,5 @@ MIT: free to use in personal and commercial projects.
 
 ## Author
 
-**Raheeb Ahmad**  Unity & AI Engineer  
+**Raheeb Ahmad**  . Unity & AI Engineer  
 [linkedin.com/in/raheeb-ahmad-48205a21a](https://linkedin.com/in/raheeb-ahmad-48205a21a) · [raheeb-ahmad.vercel.app](https://raheeb-ahmad.vercel.app)
